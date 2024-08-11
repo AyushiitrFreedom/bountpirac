@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: bountpirac
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  nextjs:
+    build: .
+    container_name: nextjs-container
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    environment:
+      CONTAINER_NAME: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: bountpirac
+      POSTGRES_PORT: 5432
+      DATABASE_URL: postgres://postgres:password@postgres:5432/bountpirac
+
+volumes:
+  postgres-data:
