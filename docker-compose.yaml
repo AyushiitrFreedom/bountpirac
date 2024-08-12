@@ -36,6 +36,9 @@ services:
       - nextjs_build:/app/.next
     networks:
       - app-network
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   nextjs:
     build:
