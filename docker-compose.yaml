@@ -16,33 +16,48 @@ services:
       - app-network
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
+
+  nextjs_build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+      args:
+        POSTGRES_HOST: postgres
+        POSTGRES_PORT: 5432
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: password
+        POSTGRES_DB: bountpirac
+        DATABASE_URL: postgres://postgres:password@postgres:5432/bountpirac
+    volumes:
+      - nextjs_build:/app/.next
+    networks:
+      - app-network
 
   nextjs:
     build:
       context: .
+      dockerfile: Dockerfile
+      target: runner
       args:
         POSTGRES_HOST: postgres
+        POSTGRES_PORT: 5432
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: password
         POSTGRES_DB: bountpirac
-        POSTGRES_PORT: 5432
         DATABASE_URL: postgres://postgres:password@postgres:5432/bountpirac
-    container_name: nextjs-container
+    volumes:
+      - nextjs_build:/app/.next
     ports:
       - "3000:3000"
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: bountpirac
-      POSTGRES_PORT: 5432
-      DATABASE_URL: postgres://postgres:password@postgres-container:5432/bountpirac
+      nextjs_build:
+        condition: service_completed_successfully
     networks:
       - app-network
 
@@ -52,3 +67,4 @@ networks:
 
 volumes:
   postgres-data:
+  nextjs_build:

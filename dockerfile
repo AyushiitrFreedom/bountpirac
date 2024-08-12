@@ -1,5 +1,6 @@
-# Use the official Node.js image as the base image
-FROM node:19.5.0-alpine
+# Base stage for both builder and runner
+FROM node:19.5.0-alpine AS base
+WORKDIR /app
 
 # Set build arguments
 ARG POSTGRES_HOST
@@ -17,9 +18,6 @@ ENV POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 ENV POSTGRES_DB=$POSTGRES_DB
 ENV DATABASE_URL=$DATABASE_URL
 
-# Set the working directory in the container
-WORKDIR /app
-
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
@@ -29,17 +27,26 @@ RUN npm install --legacy-peer-deps
 # Copy the rest of the application code
 COPY . .
 
+# Builder stage
+FROM base AS builder
+
 # Generate any necessary code or files
 RUN npm run generate
 
-# Run migrations
 RUN npm run migrate
 
 # Build the Next.js application
 RUN npm run build
 
+# Runner stage
+FROM base AS runner
+
+# Copy the built application from the builder stage
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+
 # Expose port 3000
 EXPOSE 3000
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["sh", "-c", "npm run migrate && npm start"]
