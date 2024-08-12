@@ -1,2 +1,3 @@
-.next/
-drizzle/
+/.next/
+/drizzle
+/node_modules

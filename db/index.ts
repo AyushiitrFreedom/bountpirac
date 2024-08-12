@@ -1,15 +1,19 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import { migrate } from 'drizzle-orm/postgres-js/migrator';
-import postgres from 'postgres';
+import { pgTable, serial, text, varchar } from "drizzle-orm/pg-core";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Client } from "pg";
+import exp from "constants";
 
-// for migrations
-console.log(process.env.DATABASE_URL);
-const migrationClient = postgres(process.env.DATABASE_URL!, { max: 1 });
 
-migrate(drizzle(migrationClient), "./migrations");
 
-// for query purposes
-const queryClient = postgres(process.env.DATABASE_URL!);
+// or
+const client = new Client({
+    host: process.env.POSTGRES_HOST,
+    port: Number(process.env.POSTGRES_PORT),
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+    database: process.env.POSTGRES_DB,
+});
 
-const db = drizzle(queryClient);
+await client.connect();
+const db = drizzle(client);
 export default db;

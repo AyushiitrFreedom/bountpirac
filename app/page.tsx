@@ -6,6 +6,7 @@ export default async function Home() {
 
   return (
     <div>
+      hi
       {name.map((user) => (user.name))}
     </div>
   );

@@ -3,7 +3,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:latest
-    container_name: postgres
+    container_name: postgres-container
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
@@ -12,21 +12,43 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   nextjs:
-    build: .
+    build:
+      context: .
+      args:
+        POSTGRES_HOST: postgres
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: password
+        POSTGRES_DB: bountpirac
+        POSTGRES_PORT: 5432
+        DATABASE_URL: postgres://postgres:password@postgres:5432/bountpirac
     container_name: nextjs-container
     ports:
       - "3000:3000"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
-      CONTAINER_NAME: postgres
+      POSTGRES_HOST: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: bountpirac
       POSTGRES_PORT: 5432
-      DATABASE_URL: postgres://postgres:password@postgres:5432/bountpirac
+      DATABASE_URL: postgres://postgres:password@postgres-container:5432/bountpirac
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   postgres-data:
